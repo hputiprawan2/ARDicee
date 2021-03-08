@@ -11,6 +11,7 @@ import ARKit
 
 class ViewController: UIViewController, ARSCNViewDelegate {
 
+    var diceArrray = [SCNNode]()
     @IBOutlet var sceneView: ARSCNView!
     
     override func viewDidLoad() {
@@ -77,17 +78,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                         diceNode.position = SCNVector3(x: hitResult.worldTransform.columns.3.x,
                                                        y: hitResult.worldTransform.columns.3.y + diceNode.boundingSphere.radius,
                                                        z: hitResult.worldTransform.columns.3.z)
+                        diceArrray.append(diceNode)
                         sceneView.scene.rootNode.addChildNode(diceNode)
-                        
-                        // Create a number between 1 to 4, rotate along x axis and have 4 faces showing
-                        // Float.pi/2 = 90 degrees; show new face on the top of the dice
-                        // No randomY because the dice doesn't change the face in Y axis
-                        let randomX = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
-                        let randomZ = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
-                        diceNode.runAction(SCNAction.rotateBy(x: CGFloat(randomX * 5),
-                                                              y: 0,
-                                                              z: CGFloat(randomZ * 5),
-                                                              duration: 0.5))
+                        roll(dice: diceNode)
                     }
                 }
             }
@@ -116,5 +109,34 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         } else {
             return
         }
+    }
+    
+    // Shake the phone
+    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        rollAll()
+    }
+    
+    @IBAction func rollAgain(_ sender: UIBarButtonItem) {
+        rollAll()
+    }
+    
+    private func rollAll() {
+        if !diceArrray.isEmpty {
+            for dice in diceArrray {
+                roll(dice: dice)
+            }
+        }
+    }
+    
+    private func roll(dice: SCNNode) {
+        // Create a number between 1 to 4, rotate along x axis and have 4 faces showing
+        // Float.pi/2 = 90 degrees; show new face on the top of the dice
+        // No randomY because the dice doesn't change the face in Y axis
+        let randomX = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
+        let randomZ = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
+        dice.runAction(SCNAction.rotateBy(x: CGFloat(randomX * 5),
+                                              y: 0,
+                                              z: CGFloat(randomZ * 5),
+                                              duration: 0.5))
     }
 }
