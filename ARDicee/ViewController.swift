@@ -20,26 +20,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Set the view's delegate
         sceneView.delegate = self
         
-        self.sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
-        
-//        let sphere = SCNSphere(radius: 0.2)
-//
-//        let cube = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0.01)
-//        let material = SCNMaterial()
-//        material.diffuse.contents = UIImage(named: "art.scnassets/moon.jpg")
-//        sphere.materials = [material]
-//
-//        let node = SCNNode()
-//        // x=0 center, y=0.1 raise up, z=-0.5 far away from you
-//        node.position = SCNVector3(x: 0, y: 0.1, z: -0.9)
-//        node.geometry = sphere
-//
-//        sceneView.scene.rootNode.addChildNode(node)
         sceneView.autoenablesDefaultLighting = true
-
         
-        // Set the scene to the view
-//        sceneView.scene = scene
+        // Dots represent the surfae
+//        self.sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -62,6 +46,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
+    // MARK: - Dice Rendering Methods
+    
     // Touch is detected in the view
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let touch = touches.first { // detect the location when user touches the screen
@@ -71,21 +57,64 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             if let query = sceneView.raycastQuery(from: touchLocation, allowing: .existingPlaneGeometry, alignment: .any) {
                 let results = sceneView.session.raycast(query)
                 if let hitResult = results.first {
-                    // Create a new scene
-                    let scene = SCNScene(named: "art.scnassets/diceCollada.scn")!
-                    if let diceNode = scene.rootNode.childNode(withName: "Dice", recursively: true) {
-                        // + diceNode.boundingSphere.radius to elevate the dice up in y position so the dice is align with the plane not half dice
-                        diceNode.position = SCNVector3(x: hitResult.worldTransform.columns.3.x,
-                                                       y: hitResult.worldTransform.columns.3.y + diceNode.boundingSphere.radius,
-                                                       z: hitResult.worldTransform.columns.3.z)
-                        diceArrray.append(diceNode)
-                        sceneView.scene.rootNode.addChildNode(diceNode)
-                        roll(dice: diceNode)
-                    }
+                    addDice(atLocation: hitResult)
                 }
             }
         }
     }
+    
+    private func addDice(atLocation location: ARRaycastResult) {
+        // Create a new scene
+        let scene = SCNScene(named: "art.scnassets/diceCollada.scn")!
+        if let diceNode = scene.rootNode.childNode(withName: "Dice", recursively: true) {
+            // + diceNode.boundingSphere.radius to elevate the dice up in y position so the dice is align with the plane not half dice
+            diceNode.position = SCNVector3(x: location.worldTransform.columns.3.x,
+                                           y: location.worldTransform.columns.3.y + diceNode.boundingSphere.radius,
+                                           z: location.worldTransform.columns.3.z)
+            diceArrray.append(diceNode)
+            sceneView.scene.rootNode.addChildNode(diceNode)
+            roll(dice: diceNode)
+        }
+    }
+    
+    private func roll(dice: SCNNode) {
+        // Create a number between 1 to 4, rotate along x axis and have 4 faces showing
+        // Float.pi/2 = 90 degrees; show new face on the top of the dice
+        // No randomY because the dice doesn't change the face in Y axis
+        let randomX = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
+        let randomZ = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
+        dice.runAction(SCNAction.rotateBy(x: CGFloat(randomX * 5),
+                                              y: 0,
+                                              z: CGFloat(randomZ * 5),
+                                              duration: 0.5))
+    }
+    
+    private func rollAll() {
+        if !diceArrray.isEmpty {
+            for dice in diceArrray {
+                roll(dice: dice)
+            }
+        }
+    }
+    
+    // Shake the phone
+    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+        rollAll()
+    }
+    
+    @IBAction func rollAgain(_ sender: UIBarButtonItem) {
+        rollAll()
+    }
+    
+    @IBAction func removeAllDice(_ sender: UIBarButtonItem) {
+        if !diceArrray.isEmpty {
+            for dice in diceArrray {
+                dice.removeFromParentNode()
+            }
+        }
+    }
+    
+    // MARK: - ARSCNViewDelegate Methods
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         if anchor is ARPlaneAnchor {
@@ -108,43 +137,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             node.addChildNode(planeNode)
         } else {
             return
-        }
-    }
-    
-    // Shake the phone
-    override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
-        rollAll()
-    }
-    
-    @IBAction func rollAgain(_ sender: UIBarButtonItem) {
-        rollAll()
-    }
-    
-    private func rollAll() {
-        if !diceArrray.isEmpty {
-            for dice in diceArrray {
-                roll(dice: dice)
-            }
-        }
-    }
-    
-    private func roll(dice: SCNNode) {
-        // Create a number between 1 to 4, rotate along x axis and have 4 faces showing
-        // Float.pi/2 = 90 degrees; show new face on the top of the dice
-        // No randomY because the dice doesn't change the face in Y axis
-        let randomX = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
-        let randomZ = Float(arc4random_uniform(4) + 1) * (Float.pi/2)
-        dice.runAction(SCNAction.rotateBy(x: CGFloat(randomX * 5),
-                                              y: 0,
-                                              z: CGFloat(randomZ * 5),
-                                              duration: 0.5))
-    }
-    
-    @IBAction func removeAllDice(_ sender: UIBarButtonItem) {
-        if !diceArrray.isEmpty {
-            for dice in diceArrray {
-                dice.removeFromParentNode()
-            }
         }
     }
     
