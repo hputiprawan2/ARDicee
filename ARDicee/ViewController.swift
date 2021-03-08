@@ -73,8 +73,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                     // Create a new scene
                     let scene = SCNScene(named: "art.scnassets/diceCollada.scn")!
                     if let diceNode = scene.rootNode.childNode(withName: "Dice", recursively: true) {
+                        // + diceNode.boundingSphere.radius to elevate the dice up in y position so the dice is align with the plane not half dice
                         diceNode.position = SCNVector3(x: hitResult.worldTransform.columns.3.x,
-                                                       y: hitResult.worldTransform.columns.3.y,
+                                                       y: hitResult.worldTransform.columns.3.y + diceNode.boundingSphere.radius,
                                                        z: hitResult.worldTransform.columns.3.z)
                         sceneView.scene.rootNode.addChildNode(diceNode)
                     }
