@@ -139,4 +139,13 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                                               z: CGFloat(randomZ * 5),
                                               duration: 0.5))
     }
+    
+    @IBAction func removeAllDice(_ sender: UIBarButtonItem) {
+        if !diceArrray.isEmpty {
+            for dice in diceArrray {
+                dice.removeFromParentNode()
+            }
+        }
+    }
+    
 }
