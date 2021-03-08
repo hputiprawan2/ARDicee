@@ -117,27 +117,28 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // MARK: - ARSCNViewDelegate Methods
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        if anchor is ARPlaneAnchor {
-            let planeAnchor = anchor as! ARPlaneAnchor
-            let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x),
-                                 height: CGFloat(planeAnchor.extent.z))
-            let planeNode = SCNNode() // vertical when created
-            // y = 0; want it flat with the surface
-            planeNode.position = SCNVector3(x: planeAnchor.center.x, y: 0, z: planeAnchor.center.z)
-            
-            // Since the planeNode is default in vertical, we need to transform by rotated it 90 degrees to horizontal - flat
-            // Rotating 90 degrees by 1PI rad = 180, so we need half PI radient to rotate to 90
-            // Rotating clockwise by using negative
-            planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
-            
-            let gridMaterial = SCNMaterial()
-            gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
-            plane.materials = [gridMaterial]
-            planeNode.geometry = plane
-            node.addChildNode(planeNode)
-        } else {
-            return
-        }
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {return}
+        let planeNode = createPlane(withPlaneAnchor: planeAnchor)
+        node.addChildNode(planeNode)
     }
     
+    // MARK: - Plane Rendering Methods
+    private func createPlane(withPlaneAnchor planeAnchor: ARPlaneAnchor) -> SCNNode {
+        let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x),
+                             height: CGFloat(planeAnchor.extent.z))
+        let planeNode = SCNNode() // vertical when created
+        // y = 0; want it flat with the surface
+        planeNode.position = SCNVector3(x: planeAnchor.center.x, y: 0, z: planeAnchor.center.z)
+        
+        // Since the planeNode is default in vertical, we need to transform by rotated it 90 degrees to horizontal - flat
+        // Rotating 90 degrees by 1PI rad = 180, so we need half PI radient to rotate to 90
+        // Rotating clockwise by using negative
+        planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
+        
+        let gridMaterial = SCNMaterial()
+        gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
+        plane.materials = [gridMaterial]
+        planeNode.geometry = plane
+        return planeNode
+    }
 }
