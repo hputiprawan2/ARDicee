@@ -35,12 +35,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 //
 //        sceneView.scene.rootNode.addChildNode(node)
         sceneView.autoenablesDefaultLighting = true
-        // Create a new scene
-//        let scene = SCNScene(named: "art.scnassets/diceCollada.scn")!
-//        if let diceNode = scene.rootNode.childNode(withName: "Dice", recursively: true) {
-//            diceNode.position = SCNVector3(x: 0, y: 0, z: -0.1)
-//            sceneView.scene.rootNode.addChildNode(diceNode)
-//        }
+
         
         // Set the scene to the view
 //        sceneView.scene = scene
@@ -74,10 +69,15 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             // Convert 2D location (phone screen) to 3D location (real world)
             if let query = sceneView.raycastQuery(from: touchLocation, allowing: .existingPlaneGeometry, alignment: .any) {
                 let results = sceneView.session.raycast(query)
-                if !results.isEmpty {
-                    print("Touched the plane!")
-                } else {
-                    print("Touched somewhere else.")
+                if let hitResult = results.first {
+                    // Create a new scene
+                    let scene = SCNScene(named: "art.scnassets/diceCollada.scn")!
+                    if let diceNode = scene.rootNode.childNode(withName: "Dice", recursively: true) {
+                        diceNode.position = SCNVector3(x: hitResult.worldTransform.columns.3.x,
+                                                       y: hitResult.worldTransform.columns.3.y,
+                                                       z: hitResult.worldTransform.columns.3.z)
+                        sceneView.scene.rootNode.addChildNode(diceNode)
+                    }
                 }
             }
         }
