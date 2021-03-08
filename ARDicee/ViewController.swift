@@ -44,7 +44,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Set the scene to the view
 //        sceneView.scene = scene
-      
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -67,8 +66,24 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
+    // Touch is detected in the view
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if let touch = touches.first { // detect the location when user touches the screen
+            let touchLocation = touch.location(in: sceneView)
+            
+            // Convert 2D location (phone screen) to 3D location (real world)
+            if let query = sceneView.raycastQuery(from: touchLocation, allowing: .existingPlaneGeometry, alignment: .any) {
+                let results = sceneView.session.raycast(query)
+                if !results.isEmpty {
+                    print("Touched the plane!")
+                } else {
+                    print("Touched somewhere else.")
+                }
+            }
+        }
+    }
+    
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        print("here")
         if anchor is ARPlaneAnchor {
             let planeAnchor = anchor as! ARPlaneAnchor
             let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x),
